@@ -25,6 +25,20 @@ Uses `import { Slot } from "radix-ui"` (not `@radix-ui/react-slot`) — this is 
 - Base styles built as a joined string array for readability, then passed to `cva(base, { variants })`
 - Tailwind arbitrary values used for all Conduit design tokens (e.g. `bg-[#18181b]`, `rounded-[4px]`)
 
+**Component inventory (as of 2026-03-26)**
+All components live in `src/components/ui/`:
+- `button.tsx` — cva variants: primary, secondary, destructive, endCall, ghost, navActive, navInactive
+- `badge.tsx` — cva variants: completed, live (animated pulse dot), grade, toolCallBlue, toolCallAmber, difficulty
+- `input.tsx` — multi-variant single file: default, search, error, password (strength bar), chat (send button slot)
+- `transcript-row.tsx` — speaker turn row (customer=blue dot, trainee=green dot)
+- `tool-call-card.tsx` — AI tool result card (kb=blue badge, sop/escalation=amber badge)
+- `stat-card.tsx` — single metric display (value + optional suffix + label)
+- `score-bar.tsx` — labeled progress bar, green/amber variant
+- `knowledge-gap-card.tsx` — post-session gap card with toolCallBlue badge and article link
+- `waveform.tsx` — 20-bar audio waveform, active prop triggers staggered pulse animation
+- `avatar.tsx` — circular avatar, initials fallback, sm/md/lg sizes
+- `session-timer.tsx` — pure display MM:SS formatter, exports `formatTime` utility
+
 **Why:** Radix Nova preset uses newer radix-ui monorepo package. Tailwind v4 CSS-only config means all theme tokens live in `src/index.css` inside `@theme inline {}`.
 
-**How to apply:** When adding new shadcn components with `npx shadcn-ui@latest add`, check that Slot imports use the Radix Nova pattern. Always extend existing CVA variants rather than creating separate component files.
+**How to apply:** When adding new shadcn components with `npx shadcn-ui@latest add`, check that Slot imports use the Radix Nova pattern. Always extend existing CVA variants rather than creating separate component files. No barrel index files — import each component by its direct path.

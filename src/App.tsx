@@ -1,10 +1,9 @@
-import { Button } from "./components/ui/button"
+
+import ComponentLibraryPreview from "./ComponentLibraryPreview"
 
 function App() {
-
   return (
-    <>
-    </>
+    <ComponentLibraryPreview />
   )
 }
 

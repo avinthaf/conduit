@@ -54,7 +54,11 @@ Conduit is a desktop-only web app for training customer service reps. Trainees r
 
 **Tool call cards:** Inline in AI chat, compact bordered (#27272a) cards with color-coded type pill (blue = KB retrieval, amber = SOP/escalation), body text, footer with KB article reference. Hugely effective pattern for AI-assisted UI.
 
-**Waveform component:** Row of rectangles with varying heights (10–44px) colored in blue shades (#3b82f6, #2563eb, #1d4ed8) fading to zinc for inactive zones — effective visual indicator of live audio.
+**Waveform component (updated):** Two side-by-side variants inside `wrap-waveform` (horizontal layout, gap:32, fit_content width):
+- **idle** — 32 bars, 8px wide, 2px gap, cornerRadius:999 (pill), #3b82f6, bell-curve heights (3→36→3px), centered vertically in 320×40px #0a0a0a container
+- **active** — same bar spec, two-peak sine wave heights (two full crests separated by a trough at 2px), suggesting motion
+- Bar heights grow from the center outward (alignItems:center on parent, fixed heights on bars — not fill_container)
+- Label text ("idle" / "active") sits above each container in a vertical wrapper frame
 
 **File:** design.pen at /Users/avintha/Desktop/conduit/design.pen (active in editor)
 
