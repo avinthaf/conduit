@@ -68,13 +68,19 @@ function strengthColor(strength: number): string {
 // Props
 // ---------------------------------------------------------------------------
 interface InputBaseProps
-  extends Omit<React.ComponentProps<"input">, "type">,
+  extends React.ComponentProps<"input">,
     VariantProps<typeof inputVariants> {
   /** Label rendered above the field in 12px zinc-400 */
   label?: string
-  /** Error message rendered below the field in 11px red (error variant only) */
+  /**
+   * Error message rendered below the field in 11px red.
+   * Works on any variant — not just "error".
+   */
   errorMessage?: string
-  /** Password strength 0–100 (password variant only) */
+  /**
+   * Password strength 0–100 (password variant only).
+   * The strength bar is rendered only when this prop is explicitly provided.
+   */
   strength?: number
   /** Callback fired when the send button is pressed (chat variant only) */
   onSend?: () => void
@@ -85,17 +91,25 @@ function Input({
   variant = "default",
   label,
   errorMessage,
-  strength = 0,
+  strength,
   onSend,
+  type,
   ...props
 }: InputBaseProps) {
-  // Determine the HTML input type from the variant
-  const inputType =
-    variant === "password"
+  // Derive the HTML input type: explicit `type` prop always wins, otherwise
+  // fall back to a sensible default based on the variant.
+  const inputType: React.HTMLInputTypeAttribute =
+    type ??
+    (variant === "password"
       ? "password"
       : variant === "search"
         ? "search"
-        : "text"
+        : "text")
+
+  // The strength bar is shown only when the caller explicitly passes `strength`
+  // AND the variant is "password".
+  const showStrengthBar = variant === "password" && strength !== undefined
+  const strengthValue = strength ?? 0
 
   // -------------------------------------------------------------------------
   // Default & password — simple single-field layout
@@ -115,27 +129,42 @@ function Input({
           {...props}
         />
 
-        {variant === "password" && (
-          <div className="flex flex-col gap-1 mt-0.5">
+        {showStrengthBar && (
+          <div className="flex items-center gap-2 mt-0.5">
             {/* Track */}
-            <div className="w-full h-1 rounded-full bg-[#27272a] overflow-hidden">
+            <div className="flex-1 h-1 rounded-xs bg-[#27272a] overflow-hidden">
               <div
                 className={cn(
-                  "h-full rounded-full transition-all duration-300",
-                  strengthColor(strength)
+                  "h-full rounded-xs transition-all duration-300",
+                  strengthColor(strengthValue)
                 )}
-                style={{ width: `${Math.min(100, Math.max(0, strength))}%` }}
+                style={{ width: `${Math.min(100, Math.max(0, strengthValue))}%` }}
                 role="progressbar"
-                aria-valuenow={strength}
+                aria-valuenow={strengthValue}
                 aria-valuemin={0}
                 aria-valuemax={100}
                 aria-label="Password strength"
               />
             </div>
-            <span className="font-mono text-[11px] text-[#a1a1aa]">
-              {strengthLabel(strength)}
+            <span
+              className={cn(
+                "font-mono text-[11px] font-medium leading-none",
+                strengthColor(strengthValue)
+                  .replace("bg-", "text-")
+              )}
+            >
+              {strengthLabel(strengthValue)}
             </span>
           </div>
+        )}
+
+        {errorMessage && (
+          <p
+            role="alert"
+            className="font-mono text-[11px] text-[#ef4444] leading-none"
+          >
+            {errorMessage}
+          </p>
         )}
       </div>
     )
@@ -182,7 +211,7 @@ function Input({
 
         <div className="relative w-full">
           <input
-            type="text"
+            type={inputType}
             aria-invalid="true"
             aria-describedby={errorMessage ? "input-error-msg" : undefined}
             className={cn(inputVariants({ variant }), className)}

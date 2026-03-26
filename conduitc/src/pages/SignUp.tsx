@@ -1,5 +1,6 @@
 import * as React from "react"
-import { Globe, AlertCircle } from "lucide-react"
+import { Link } from "react-router"
+import { Globe } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -33,25 +34,6 @@ function calcStrength(password: string): number {
   if (/[^A-Za-z0-9]/.test(password)) score += 20
   return Math.min(100, score)
 }
-
-// ---------------------------------------------------------------------------
-// Shared raw-input classes — mirror Input variant="default" exactly
-// ---------------------------------------------------------------------------
-const rawInputClasses = cn(
-  "w-full h-10",
-  "bg-[#18181b] text-[oklch(0.985_0_0)]",
-  "border border-[#27272a]",
-  "rounded-lg",
-  "font-mono text-[13px]",
-  "placeholder:text-[#52525b]",
-  "px-3",
-  "outline-none",
-  "transition-colors duration-150",
-  "focus:border-[#3f3f46]",
-  "disabled:pointer-events-none disabled:opacity-40"
-)
-
-const labelClasses = "font-mono text-[12px] font-medium text-[#a1a1aa] leading-none"
 
 // ---------------------------------------------------------------------------
 // Sign Up page
@@ -116,128 +98,44 @@ export default function SignUp() {
             required
           />
 
-          {/* Work Email — raw <input> because Input omits the `type` prop
-              and the default variant always produces type="text". Classes
-              mirror the default variant's fieldBase + px-3 exactly. */}
-          <div className="flex flex-col gap-1.5 w-full">
-            <label
-              htmlFor="signup-email"
-              className={labelClasses}
-            >
-              Work Email
-            </label>
-            <input
-              id="signup-email"
-              type="email"
-              placeholder="you@company.com"
-              autoComplete="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className={rawInputClasses}
-            />
-          </div>
+          {/* Work Email — type="email" now accepted directly */}
+          <Input
+            variant="default"
+            label="Work Email"
+            type="email"
+            placeholder="you@company.com"
+            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
 
-          {/* Password — uses the "password" variant which renders the
-              strength bar. Error state is wired via a separate error row
-              below the Input, matching the design's red-border + message
-              + strength bar layout. */}
-          <div className="flex flex-col gap-1.5 w-full">
-            <label
-              htmlFor="signup-password"
-              className={labelClasses}
-            >
-              Password
-            </label>
-            <input
-              id="signup-password"
-              type="password"
-              placeholder="••••••••"
-              autoComplete="new-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              aria-invalid={!!passwordError}
-              aria-describedby={passwordError ? "signup-password-error" : undefined}
-              className={cn(
-                rawInputClasses,
-                passwordError && "border-[#ef4444] focus:border-[#ef4444]"
-              )}
-            />
+          {/* Password — strength bar appears when `strength` is provided;
+              errorMessage surfaces the validation message below the bar. */}
+          <Input
+            variant="password"
+            label="Password"
+            type="password"
+            placeholder="••••••••"
+            autoComplete="new-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            strength={password.length > 0 ? strength : undefined}
+            errorMessage={passwordError || undefined}
+          />
 
-            {/* Error message */}
-            {passwordError && (
-              <div
-                id="signup-password-error"
-                role="alert"
-                className="flex items-center gap-1"
-              >
-                <AlertCircle
-                  aria-hidden="true"
-                  className="size-3 text-[#ef4444] shrink-0"
-                />
-                <span className="font-mono text-[11px] text-[#ef4444] leading-none">
-                  {passwordError}
-                </span>
-              </div>
-            )}
-
-            {/* Strength bar — visible once the user starts typing */}
-            {password.length > 0 && (
-              <div className="flex items-center gap-2 mt-0.5">
-                <div className="flex-1 h-1 rounded-xs bg-[#27272a] overflow-hidden">
-                  <div
-                    className={cn(
-                      "h-full rounded-xs transition-all duration-300",
-                      strength < 34
-                        ? "bg-[#ef4444]"
-                        : strength < 67
-                          ? "bg-[#f59e0b]"
-                          : "bg-[#22c55e]"
-                    )}
-                    style={{ width: `${strength}%` }}
-                    role="progressbar"
-                    aria-valuenow={strength}
-                    aria-valuemin={0}
-                    aria-valuemax={100}
-                    aria-label="Password strength"
-                  />
-                </div>
-                <span
-                  className={cn(
-                    "font-mono text-[11px] font-medium leading-none",
-                    strength < 34
-                      ? "text-[#ef4444]"
-                      : strength < 67
-                        ? "text-[#f59e0b]"
-                        : "text-[#22c55e]"
-                  )}
-                >
-                  {strength < 34 ? "Weak" : strength < 67 ? "Fair" : "Strong"}
-                </span>
-              </div>
-            )}
-          </div>
-
-          {/* Confirm Password — raw <input>, no strength bar */}
-          <div className="flex flex-col gap-1.5 w-full">
-            <label
-              htmlFor="signup-confirm-password"
-              className={labelClasses}
-            >
-              Confirm Password
-            </label>
-            <input
-              id="signup-confirm-password"
-              type="password"
-              placeholder="••••••••"
-              autoComplete="new-password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-              className={rawInputClasses}
-            />
-          </div>
+          {/* Confirm Password — no `strength` prop so no strength bar */}
+          <Input
+            variant="password"
+            label="Confirm Password"
+            type="password"
+            placeholder="••••••••"
+            autoComplete="new-password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            required
+          />
 
           {/* Create account */}
           <Button
@@ -278,8 +176,8 @@ export default function SignUp() {
         <span className="font-mono text-[12px] text-[#71717a] leading-none">
           Already have an account?
         </span>
-        <a
-          href="#"
+        <Link
+          to="/login"
           className={cn(
             "font-mono text-[12px] font-normal leading-none",
             "text-[#fafafa]",
@@ -288,7 +186,7 @@ export default function SignUp() {
           )}
         >
           Sign in
-        </a>
+        </Link>
       </div>
     </div>
   )

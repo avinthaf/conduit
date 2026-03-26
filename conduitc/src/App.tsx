@@ -1,5 +1,5 @@
 
-import ComponentLibraryPreview from "./ComponentLibraryPreview"
+import { Navigate, Route, Routes } from "react-router"
 import ActiveSession from "./pages/ActiveSession"
 import Dashboard from "./pages/Dashboard"
 import Login from "./pages/Login"
@@ -8,7 +8,14 @@ import SignUp from "./pages/SignUp"
 
 function App() {
   return (
-    <PostSessionReview />
+    <Routes>
+      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/signup" element={<SignUp />} />
+      <Route path="/dashboard" element={<Dashboard />} />
+      <Route path="/session/active" element={<ActiveSession />} />
+      <Route path="/session/review" element={<PostSessionReview />} />
+    </Routes>
   )
 }
 

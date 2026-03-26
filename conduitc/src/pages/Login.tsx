@@ -1,4 +1,5 @@
 import * as React from "react"
+import { Link } from "react-router"
 import { Globe } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -75,39 +76,18 @@ export default function Login() {
             required
           />
 
-          {/* Password — raw <input> because the Input component's "password"
-              variant renders an unwanted strength bar. Classes mirror the
-              `default` variant's fieldBase + px-3 exactly. */}
-          <div className="flex flex-col gap-1.5 w-full">
-            <label
-              htmlFor="login-password"
-              className="font-mono text-[12px] font-medium text-[#a1a1aa] leading-none"
-            >
-              Password
-            </label>
-            <input
-              id="login-password"
-              type="password"
-              placeholder="••••••••••••"
-              autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className={cn(
-                "w-full h-10",
-                "bg-[#18181b] text-[oklch(0.985_0_0)]",
-                "border border-[#27272a]",
-                "rounded-lg",
-                "font-mono text-[13px]",
-                "placeholder:text-[#52525b]",
-                "px-3",
-                "outline-none",
-                "transition-colors duration-150",
-                "focus:border-[#3f3f46]",
-                "disabled:pointer-events-none disabled:opacity-40"
-              )}
-            />
-          </div>
+          {/* Password — variant="password" without a `strength` prop omits
+              the strength bar, giving us a plain password field. */}
+          <Input
+            variant="password"
+            label="Password"
+            type="password"
+            placeholder="••••••••••••"
+            autoComplete="current-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
 
           {/* Sign in */}
           <Button
@@ -158,8 +138,8 @@ export default function Login() {
         <span className="font-mono text-[12px] text-[#71717a] leading-none">
           Don't have an account?
         </span>
-        <a
-          href="#"
+        <Link
+          to="/signup"
           className={cn(
             "font-mono text-[12px] font-normal leading-none",
             "text-[#fafafa]",
@@ -168,7 +148,7 @@ export default function Login() {
           )}
         >
           Sign up
-        </a>
+        </Link>
       </div>
     </div>
   )
