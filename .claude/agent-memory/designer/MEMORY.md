@@ -1,0 +1,2 @@
+- [Conduit Project](project_conduit.md) — AI training app design: 3 screens, dark mode, IBM Plex Mono, design tokens, pencil-new.pen
+- [Pencil.dev MCP Patterns](reference_pencil_patterns.md) — Binding expiry, fit_content gotchas, icon names, progress bars, placeholder protocol
