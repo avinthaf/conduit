@@ -27,6 +27,16 @@ Conduit is a desktop-only web app for training customer service reps. Trainees r
 
 **File:** design.pen (active file, located at /Users/avintha/Desktop/conduit/design.pen)
 
+**Component Library frame (Q9ddV):** A dedicated frame placed at x:0, y:1100 (below all screens), labeled "Component Library". Contains all extracted reusable UI components grouped into 8 labelled sections with section header labels and component name labels above each item:
+1. BUTTONS — Primary, Secondary, Destructive, End Call (pill), Ghost, Nav Active, Nav Inactive
+2. BADGES & PILLS — Completed, Live (dot + LIVE), Grade, Tool Call Blue (#172554), Tool Call Amber (#2d1b00), Live Indicator (scenario dot), Difficulty badge
+3. INPUTS — Default (labelled), Search (icon), Error (red stroke + error msg + icon), AI Chat Bar, Password Strength (track + amber fill + label)
+4. NAVIGATION — Full Top NavBar (logo+links+avatar), Avatar/User, Sidebar Nav Item Active, Sidebar Nav Item Inactive, Breadcrumb trail
+5. CALL CONTROLS — Caller Avatar Block (48px circle + name + LIVE chip), Waveform (blue bars), VoIP Controls (Mute/Hold/End Call)
+6. CARDS — Tool Call Card (tag+body+KB footer), Score Badge (88×88), Context/Info Card (key-value rows), Knowledge Gap Card, Strengths Card (green), Improve Card (amber+flagged item)
+7. DATA DISPLAY — Stat Counter, Stat Streak (green), Score Bars (green/amber tracks), Transcript Row Customer, Transcript Row Trainee, Flagged Bubble, Table Session Row (5-col)
+8. MISCELLANEOUS — Timer Display, Trainee Indicator, AI Coach Status Header, Send Button, Objectives Card, OR Divider, Google Button, Auth Footer Link
+
 **Key palette:**
 - bg-base: #0a0a0a
 - bg-raised: #111111
