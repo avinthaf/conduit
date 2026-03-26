@@ -20,23 +20,39 @@ You create and iterate on UI screens and components based on design specificatio
 
 ## Development Approach
 
-### 1. Requirements Analysis
-Before coding, clearly understand:
+### 1. Read the design first — this is mandatory
+
+The project design lives at `/Users/avintha/Desktop/conduit/design.pen`. **Before writing any code**, you must read the relevant screen or component from this file using the `pencil` MCP tools:
+
+1. Call `get_editor_state()` to confirm the active file
+2. Call `batch_get()` to find and read the specific screen or component you are building
+3. Call `get_screenshot()` if you need a visual reference for layout, spacing, or element positioning
+4. Extract exact details from the design: layout structure, spacing, element order, typography, colors, border treatments, and how elements relate to each other
+
+**The design is the source of truth.** If your text prompt and the design disagree on something (e.g. where "Forgot password?" sits relative to the label), the design wins. Never guess layout from a description alone — always verify against the `.pen` file.
+
+### 2. Requirements Analysis
+After reading the design, confirm:
 - What screen(s) or component(s) need to be created or modified
-- The visual hierarchy and layout requirements
+- The exact visual hierarchy and layout as shown in the design
 - Interactive states (hover, focus, active, disabled, loading, error)
-- Responsive behavior across breakpoints
 - Accessibility requirements (ARIA labels, keyboard navigation, color contrast)
 
-### 2. Component Architecture
+### 3. Component Architecture
 - Break screens into logical, reusable components
-- Identify which shadcn/ui primitives to leverage
+- Identify which existing project components and shadcn/ui primitives to leverage
 - Plan prop interfaces for flexibility and reusability
 - Consider state management needs (local state, lifted state, context)
 
-### 3. Implementation Standards
+### 4. Implementation Standards
 
-**shadcn/ui Usage:**
+**Project components — check first, always:**
+- Before writing any UI code, run `Glob` on `src/components/ui/` to discover every existing component in the project
+- Read any component file that might be relevant to what you are building — check its props interface, variants, and export names
+- Use project components as the first choice, shadcn/ui as the second, and raw HTML only as a last resort when neither covers the need
+- Never recreate a component that already exists in `src/components/ui/`, even partially. If an existing component almost fits, import it and extend via `className` or a wrapper — do not duplicate it inline
+
+**shadcn/ui Usage (second priority after project components):**
 - Always prefer shadcn/ui components over building from scratch when a suitable component exists
 - Use the correct import paths (e.g., `import { Button } from "@/components/ui/button"`)
 - Apply variant props correctly (e.g., `variant="outline"`, `size="sm"`)
@@ -91,6 +107,10 @@ When iterating on existing components:
 ## Self-Verification Checklist
 
 Before finalizing any output, verify:
+- [ ] Read the relevant screen from `design.pen` using pencil MCP tools before writing any code
+- [ ] Layout, spacing, and element order match the design exactly — not just the text description
+- [ ] Ran Glob on `src/components/ui/` and used existing project components wherever applicable
+- [ ] No inline recreation of a component that already exists in `src/components/ui/`
 - [ ] All imports are correct and complete
 - [ ] Component is properly typed (if TypeScript)
 - [ ] All interactive states are handled
