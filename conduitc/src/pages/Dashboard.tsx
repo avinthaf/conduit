@@ -14,6 +14,7 @@ import {
 
 import { Button } from "@/components/ui/button"
 import { Avatar } from "@/components/ui/avatar"
+import { ScenarioPickerModal } from "@/components/ui/scenario-picker-modal"
 import { cn } from "@/lib/utils"
 
 // ---------------------------------------------------------------------------
@@ -286,6 +287,7 @@ function SidebarItem({
 
 export default function Dashboard() {
   const [query, setQuery] = React.useState("")
+  const [modalOpen, setModalOpen] = React.useState(false)
 
   const filteredSessions = React.useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -369,6 +371,7 @@ export default function Dashboard() {
             variant="primary"
             size="default"
             className="flex items-center gap-2 px-5 py-2.5"
+            onClick={() => setModalOpen(true)}
           >
             <Play aria-hidden="true" size={14} className="shrink-0 text-[#0a0a0a]" />
             Start Training Session
@@ -604,6 +607,16 @@ export default function Dashboard() {
           </div>
         </main>
       </div>
+
+      <ScenarioPickerModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onStart={(id) => {
+          setModalOpen(false)
+          // TODO: navigate to active session for scenario `id`
+          console.log("Starting session for scenario:", id)
+        }}
+      />
     </div>
   )
 }

@@ -9,7 +9,8 @@ Conduit is a desktop-only web app for training customer service reps. Trainees r
 **Design language:** Near-black dark mode (#0a0a0a bg), zinc-gray neutrals (shadcn/ui palette), IBM Plex Mono throughout — code-native, developer-dashboard aesthetic. No gradients, no illustrations, icon + data-forward.
 
 **Screens designed:**
-1. Dashboard / Session Lobby — nav, hero CTA, stats row (sessions/score/time/streak), scenario filter sidebar, recent sessions table with status badges
+1a. Dashboard / Session Lobby (BwmbB, x=1520) — nav, hero CTA, stats row (sessions/score/time/streak), scenario filter sidebar, recent sessions table with status badges
+1b. Dashboard (Modal Open) (veUqd, x=1520, y=1040) — copy of Dashboard with "Select a Training Scenario" modal overlaid; dim backdrop (#0a0a0aCC), 800×800px centered modal (#111111, #27272a border, 6px radius), 4 scenario cards (selected=blue #3b82f6 border + check indicator, unselected=#27272a border), difficulty badges (Easy=#22c55e/#052e16, Medium=#f59e0b/#2d1b00, Hard=#ef4444/#450a0a), category tags (#3b82f6/#172554), footer with Cancel (secondary) + Start Session (primary, play icon) buttons
 2. Active Training Session — 3-column layout: left call panel (avatar, waveform, transcript, VoIP controls), center AI Coach chat (tool call cards inline, chat input), right context drawer (scenario brief, customer profile, objectives)
 3. Post-Session Review — score badge header, breadcrumb nav, transcript replay with flagged moments, AI feedback (strengths/improve/score breakdown bars), knowledge gaps (linked KB/SOP cards), recommended next scenario CTA
 4. Login — centered 400px card on #0a0a0a, logo + tagline above card, Email + Password fields, white "Sign in" CTA, "Forgot password?" ghost link, OR divider + "Continue with Google" secondary button, "Don't have an account? Sign up" footer
@@ -27,7 +28,7 @@ Conduit is a desktop-only web app for training customer service reps. Trainees r
 
 **File:** design.pen (active file, located at /Users/avintha/Desktop/conduit/design.pen)
 
-**Component Library frame (Q9ddV):** A dedicated frame placed at x:0, y:1100 (below all screens), labeled "Component Library". Contains all extracted reusable UI components grouped into 8 labelled sections with section header labels and component name labels above each item:
+**Component Library frame (Q9ddV):** A dedicated frame placed at x:0, y:1100 (below all screens), labeled "Component Library". Contains all extracted reusable UI components grouped into 9 labelled sections with section header labels and component name labels above each item:
 1. BUTTONS — Primary, Secondary, Destructive, End Call (pill), Ghost, Nav Active, Nav Inactive
 2. BADGES & PILLS — Completed, Live (dot + LIVE), Grade, Tool Call Blue (#172554), Tool Call Amber (#2d1b00), Live Indicator (scenario dot), Difficulty badge
 3. INPUTS — Default (labelled), Search (icon), Error (red stroke + error msg + icon), AI Chat Bar, Password Strength (track + amber fill + label)
@@ -36,6 +37,7 @@ Conduit is a desktop-only web app for training customer service reps. Trainees r
 6. CARDS — Tool Call Card (tag+body+KB footer), Score Badge (88×88), Context/Info Card (key-value rows), Knowledge Gap Card, Strengths Card (green), Improve Card (amber+flagged item)
 7. DATA DISPLAY — Stat Counter, Stat Streak (green), Score Bars (green/amber tracks), Transcript Row Customer, Transcript Row Trainee, Flagged Bubble, Table Session Row (5-col)
 8. MISCELLANEOUS — Timer Display, Trainee Indicator, AI Coach Status Header, Send Button, Objectives Card, OR Divider, Google Button, Auth Footer Link
+9. MODALS — Modal / Scenario Picker (reusable component id: jNp3I; 800×800px; header+4 scenario cards+footer; card 1 = selected/blue state, cards 2-4 = default/zinc state)
 
 **Key palette:**
 - bg-base: #0a0a0a
@@ -63,7 +65,8 @@ Conduit is a desktop-only web app for training customer service reps. Trainees r
 **File:** design.pen at /Users/avintha/Desktop/conduit/design.pen (active in editor)
 
 **Screen x-positions (1440px wide each, 960px tall):**
-- Screen 1 Dashboard: x=1520
+- Screen 1a Dashboard: x=1520, y=0
+- Screen 1b Dashboard (Modal Open): x=1520, y=1040
 - Screen 2 Active Session: x=3040
 - Screen 3 Post-Session Review: x=4560
 - Screen 4 Login: x=6080
