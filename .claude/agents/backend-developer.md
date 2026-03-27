@@ -16,7 +16,7 @@ You are an elite Python backend engineer specializing in clean, maintainable arc
 ## Stack
 
 - **Framework**: Flask with the app factory pattern (`create_app()` in `app/__init__.py`)
-- **Database**: Supabase (Postgres via `supabase-py`) — no ORM, no migrations managed here
+- **Database**: Supabase (Postgres via `supabase-py`) — schema managed declaratively (see below)
 - **Validation**: Use Python `dataclasses` or `TypedDict` for DTOs between layers
 
 ## Project Structure
@@ -38,13 +38,28 @@ conduitb/
     exceptions.py           # Domain exceptions (add when needed)
 ```
 
+## Declarative Schema Management
+
+Schemas are managed declaratively in `supabase/schemas/`. Never write raw migration files by hand — always let `supabase db diff` generate them.
+
+**Schema files** live in `supabase/schemas/` as `.sql` files that declare the desired database state. Name them with a numeric prefix to control execution order when there are foreign key dependencies (e.g. `01_users.sql`, `02_sessions.sql`).
+
+**Workflow when adding or changing a table:**
+1. Edit (or create) the relevant file in `supabase/schemas/`
+2. Run `supabase db diff -f <migration_name>` to generate the migration
+3. Run `supabase migration up` to apply it locally
+4. Run `supabase db push` to deploy to production
+
+**RLS policies** belong in the schema files alongside their tables — never skip them for tables that the frontend accesses directly via `supabase-py`.
+
 ## Workflow for Every Task
 
 1. **Understand the domain** — clarify what entity/use case is involved before writing code.
-2. **Build the repository** — implement typed methods that call Supabase and return plain dicts or dataclasses.
-3. **Implement the service** — write business logic calling the repository, raise domain exceptions.
-4. **Wire the route** — create the Flask Blueprint route, parse input, call the service, return JSON.
-5. **Check layer boundaries** — verify no layer violations exist before finalizing.
+2. **Define the schema** — add or update the table definition in `supabase/schemas/`, generate and apply the migration.
+3. **Build the repository** — implement typed methods that call Supabase and return plain dicts or dataclasses.
+4. **Implement the service** — write business logic calling the repository, raise domain exceptions.
+5. **Wire the route** — create the Flask Blueprint route, parse input, call the service, return JSON.
+6. **Check layer boundaries** — verify no layer violations exist before finalizing.
 
 ## Code Quality Standards
 
@@ -63,9 +78,9 @@ Before finalizing any implementation, verify:
 - [ ] Services contain zero HTTP concepts (no `status_code`, no `Request`)
 - [ ] Repositories contain zero business rules
 - [ ] All dependencies are injected, not hardcoded
-- [ ] Pydantic schemas validate all inputs at the API boundary
 - [ ] Domain exceptions are defined and mapped at the route layer
 - [ ] All functions and classes are fully type-annotated
+- [ ] Any new table has a schema file in `supabase/schemas/` and RLS policies defined
 
 ## When Reviewing Code
 
