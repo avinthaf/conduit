@@ -5,6 +5,7 @@ import { Globe } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
+import { useAuth } from "@/context/AuthContext"
 
 // ---------------------------------------------------------------------------
 // OR divider
@@ -25,12 +26,32 @@ function OrDivider() {
 // Login page
 // ---------------------------------------------------------------------------
 export default function Login() {
+  const { signIn, signInWithGoogle } = useAuth()
   const [email, setEmail] = React.useState("")
   const [password, setPassword] = React.useState("")
+  const [error, setError] = React.useState("")
+  const [loading, setLoading] = React.useState(false)
 
-  function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>) {
+  async function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>) {
     e.preventDefault()
-    // TODO: wire up authentication
+    setError("")
+    setLoading(true)
+    try {
+      await signIn(email, password)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Sign in failed")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function handleGoogleSignIn() {
+    setError("")
+    try {
+      await signInWithGoogle()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Google sign in failed")
+    }
   }
 
   return (
@@ -89,13 +110,21 @@ export default function Login() {
             required
           />
 
+          {/* Error message */}
+          {error && (
+            <p className="font-mono text-[12px] text-[#ef4444] leading-snug">
+              {error}
+            </p>
+          )}
+
           {/* Sign in */}
           <Button
             type="submit"
             variant="primary"
             className="w-full h-10 py-0"
+            disabled={loading}
           >
-            Sign in
+            {loading ? "Signing in…" : "Sign in"}
           </Button>
         </form>
 
@@ -122,9 +151,7 @@ export default function Login() {
           type="button"
           variant="secondary"
           className="w-full h-10 py-0 gap-2"
-          onClick={() => {
-            // TODO: wire up Google OAuth
-          }}
+          onClick={handleGoogleSignIn}
         >
           <Globe aria-hidden="true" className="size-4 shrink-0 text-[#a1a1aa]" />
           Continue with Google

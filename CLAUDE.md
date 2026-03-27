@@ -77,11 +77,27 @@ All pages use a near-black dark background. Key raw values used throughout — d
 src/
   pages/              ← full screens (Login, SignUp, Dashboard, ActiveSession, PostSessionReview)
   components/ui/      ← design-system components (button, badge, input, waveform, etc.)
-  lib/utils.ts        ← cn() helper
+  context/
+    AuthContext.tsx   ← AuthProvider, useAuth() hook, ProtectedRoute
+  lib/
+    supabase.ts       ← Supabase client singleton (reads VITE_SUPABASE_URL / VITE_SUPABASE_KEY)
+    utils.ts          ← cn() helper
   index.css           ← Tailwind imports + shadcn tokens + @theme inline
-  App.tsx             ← root; swap which page is rendered here during development
+  App.tsx             ← root router; public routes + ProtectedRoute layout route
   ComponentLibraryPreview.tsx  ← visual showcase of all components
 ```
+
+### Authentication
+
+Auth is implemented with `@supabase/supabase-js`. The local Supabase instance API runs on port **54321** (Studio is on 54323 — do not use that port in env vars).
+
+- **`src/lib/supabase.ts`** — exports a single `supabase` client instance.
+- **`src/context/AuthContext.tsx`** — exports `AuthProvider` (wraps the app in `main.tsx`), `useAuth()` hook, and `ProtectedRoute` (layout route that redirects unauthenticated users to `/login`).
+- `useAuth()` returns `{ session, user, loading, signIn, signUp, signInWithGoogle, signOut }`.
+- Session is hydrated on mount via `supabase.auth.getSession()` and kept reactive via `onAuthStateChange`. Navigation after sign-in/sign-up happens automatically because `ProtectedRoute` reacts to session changes.
+- Routes in `App.tsx`: `/login` and `/signup` are public; all other routes are nested under `<ProtectedRoute>`.
+- Email confirmation is **disabled** — `signUp` resolves a session immediately.
+- `conduitc/.env` must contain `VITE_SUPABASE_URL` and `VITE_SUPABASE_KEY` (Vite only reads env from the `conduitc/` directory, not the repo root).
 
 ### Component hierarchy
 

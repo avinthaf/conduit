@@ -1,10 +1,11 @@
 import * as React from "react"
-import { Link } from "react-router"
+import { Link, useNavigate } from "react-router"
 import { Globe } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
+import { useAuth } from "@/context/AuthContext"
 
 // ---------------------------------------------------------------------------
 // OR divider — identical to Login
@@ -39,10 +40,14 @@ function calcStrength(password: string): number {
 // Sign Up page
 // ---------------------------------------------------------------------------
 export default function SignUp() {
+  const { signUp, signInWithGoogle } = useAuth()
+  const navigate = useNavigate()
   const [fullName, setFullName] = React.useState("")
   const [email, setEmail] = React.useState("")
   const [password, setPassword] = React.useState("")
   const [confirmPassword, setConfirmPassword] = React.useState("")
+  const [error, setError] = React.useState("")
+  const [loading, setLoading] = React.useState(false)
 
   const strength = calcStrength(password)
   const passwordError =
@@ -50,9 +55,31 @@ export default function SignUp() {
       ? "Password must be at least 8 characters"
       : ""
 
-  function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>) {
+  async function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>) {
     e.preventDefault()
-    // TODO: wire up account creation
+    setError("")
+    if (password !== confirmPassword) {
+      setError("Passwords do not match")
+      return
+    }
+    setLoading(true)
+    try {
+      await signUp(email, password, fullName)
+      navigate("/dashboard")
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Account creation failed")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function handleGoogleSignIn() {
+    setError("")
+    try {
+      await signInWithGoogle()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Google sign in failed")
+    }
   }
 
   return (
@@ -137,13 +164,20 @@ export default function SignUp() {
             required
           />
 
+          {/* Error / success messages */}
+          {error && (
+            <p className="font-mono text-[12px] text-[#ef4444] leading-snug">
+              {error}
+            </p>
+          )}
           {/* Create account */}
           <Button
             type="submit"
             variant="primary"
             className="w-full h-10 py-0"
+            disabled={loading}
           >
-            Create account
+            {loading ? "Creating account…" : "Create account"}
           </Button>
         </form>
 
@@ -160,9 +194,7 @@ export default function SignUp() {
           type="button"
           variant="secondary"
           className="w-full h-10 py-0 gap-2"
-          onClick={() => {
-            // TODO: wire up Google OAuth
-          }}
+          onClick={handleGoogleSignIn}
         >
           <Globe aria-hidden="true" className="size-4 shrink-0 text-[#a1a1aa]" />
           Continue with Google
