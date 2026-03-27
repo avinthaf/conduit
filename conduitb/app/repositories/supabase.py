@@ -13,7 +13,7 @@ from supabase import Client, create_client
 
 # Load .env from the project root (conduitb/.env), not the cwd, so the
 # singleton works regardless of where the process is launched from.
-_env_path = Path(__file__).resolve().parents[3] / ".env"
+_env_path = Path(__file__).resolve().parents[2] / ".env"
 load_dotenv(dotenv_path=_env_path)
 
 _url: str = os.environ["SUPABASE_URL"]

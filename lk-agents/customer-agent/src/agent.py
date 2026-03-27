@@ -60,6 +60,8 @@ async def customer_agent(ctx: agents.JobContext):
         ),
     )
 
+    await ctx.room.local_participant.set_name("customer-agent")
+
     await session.generate_reply(
         instructions="Start the conversation as the customer. Introduce yourself briefly and state why you are calling."
     )

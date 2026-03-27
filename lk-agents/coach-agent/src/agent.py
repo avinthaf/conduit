@@ -52,7 +52,6 @@ async def coach_agent(ctx: agents.JobContext):
     session = AgentSession(
         stt="deepgram/nova-3:multi",
         llm="openai/gpt-4.1-mini",
-        tts="cartesia/sonic-3:9626c31c-bec5-4cca-baa8-f8ba9e84c8bc",
         vad=silero.VAD.load(),
         turn_handling=TurnHandlingOptions(
             turn_detection=MultilingualModel(),
@@ -63,6 +62,7 @@ async def coach_agent(ctx: agents.JobContext):
         room=ctx.room,
         agent=CoachAgent(objectives=objectives),
         room_options=room_io.RoomOptions(
+            audio_output=False,
             audio_input=room_io.AudioInputOptions(
                 noise_cancellation=lambda params: (
                     noise_cancellation.BVCTelephony()
@@ -74,6 +74,8 @@ async def coach_agent(ctx: agents.JobContext):
     )
 
     # Coach listens silently until there is something worth saying.
+    await ctx.room.local_participant.set_name("coach-agent")
+
     await session.generate_reply(
         instructions="Briefly introduce yourself to the trainee and let them know you are observing. Keep it to one sentence."
     )

@@ -50,3 +50,23 @@ export async function createSession(userId: string, scenarioId: string): Promise
   const data = (await response.json()) as { session: ApiSession }
   return data.session
 }
+
+export interface LiveKitTokenResponse {
+  token: string
+  url: string
+  room: string
+}
+
+export async function getLiveKitToken(
+  sessionId: string,
+  userId: string,
+  name?: string
+): Promise<LiveKitTokenResponse> {
+  const res = await fetch(`${BASE_URL}/api/livekit/token`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ session_id: sessionId, user_id: userId, name }),
+  })
+  if (!res.ok) throw new Error("Failed to fetch LiveKit token")
+  return res.json() as Promise<LiveKitTokenResponse>
+}

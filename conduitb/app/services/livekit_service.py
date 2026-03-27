@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 
 from livekit.api import AccessToken, RoomAgentDispatch, RoomConfiguration, VideoGrants

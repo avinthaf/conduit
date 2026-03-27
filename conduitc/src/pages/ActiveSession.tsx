@@ -1,4 +1,5 @@
 import * as React from "react"
+import { useMemo, useEffect } from "react"
 import {
   Radio,
   MicOff,
@@ -10,53 +11,25 @@ import {
   BookOpen,
   BarChart2,
 } from "lucide-react"
+import { useSearchParams } from "react-router"
+import { TokenSource } from "livekit-client"
+import {
+  SessionProvider,
+  RoomAudioRenderer,
+  useSession,
+  useAgent,
+  useSessionMessages,
+} from "@livekit/components-react"
+import type { ReceivedMessage } from "@livekit/components-core"
 
 import { cn } from "@/lib/utils"
 import { Avatar } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { SessionTimer } from "@/components/ui/session-timer"
 import { TranscriptRow } from "@/components/ui/transcript-row"
-import { ToolCallCard } from "@/components/ui/tool-call-card"
 import { Waveform } from "@/components/ui/waveform"
-
-// ---------------------------------------------------------------------------
-// Static placeholder data — matches the design spec exactly
-// ---------------------------------------------------------------------------
-
-const TRANSCRIPT_TURNS = [
-  {
-    id: "t1",
-    speaker: "customer" as const,
-    name: "Maya Chen",
-    timestamp: "12:21",
-    message:
-      "I've been waiting three weeks for my refund and nobody has given me a straight answer. This is completely unacceptable.",
-  },
-  {
-    id: "t2",
-    speaker: "trainee" as const,
-    name: "You (Jordan)",
-    timestamp: "12:22",
-    message:
-      "I completely understand your frustration, Ms. Chen. Let me pull up your account and look at the refund status right now.",
-  },
-  {
-    id: "t3",
-    speaker: "customer" as const,
-    name: "Maya Chen",
-    timestamp: "12:23",
-    message:
-      "The order number is 8841-BXQP. I paid $349 and I want my money back today.",
-  },
-  {
-    id: "t4",
-    speaker: "trainee" as const,
-    name: "You (Jordan)",
-    timestamp: "12:24",
-    message:
-      "I can see order 8841-BXQP. The refund was initiated on the 18th but may be delayed. Let me check the policy on expedited processing...",
-  },
-]
+import { useAuth } from "@/context/AuthContext"
+import { getLiveKitToken } from "@/lib/api"
 
 // ---------------------------------------------------------------------------
 // Sub-components
@@ -135,7 +108,9 @@ function NavBar() {
 // Call Panel (left column, 380px)
 // ---------------------------------------------------------------------------
 
-function CallPanel() {
+function CallPanel({ messages }: { messages: ReceivedMessage[] }) {
+  const agent = useAgent()
+
   return (
     <aside
       aria-label="Call panel"
@@ -198,8 +173,8 @@ function CallPanel() {
           </div>
         </div>
 
-        {/* Waveform */}
-        <Waveform active={true} className="w-full" />
+        {/* Waveform — active when agent is speaking */}
+        <Waveform active={agent.state === "speaking"} className="w-full" />
 
         {/* VoIP controls */}
         <div className="flex items-center justify-center gap-2 pt-4 w-full">
@@ -263,15 +238,21 @@ function CallPanel() {
           aria-label="Transcript feed"
           aria-live="polite"
         >
-          {TRANSCRIPT_TURNS.map((turn) => (
-            <TranscriptRow
-              key={turn.id}
-              speaker={turn.speaker}
-              name={turn.name}
-              timestamp={turn.timestamp}
-              message={turn.message}
-            />
-          ))}
+          {messages.map((msg) => {
+            const isCustomer = msg.type === "agentTranscript"
+            return (
+              <TranscriptRow
+                key={msg.id}
+                speaker={isCustomer ? "customer" : "trainee"}
+                name={isCustomer ? "Customer" : "You"}
+                timestamp={new Date(msg.timestamp ?? Date.now()).toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+                message={msg.message}
+              />
+            )
+          })}
         </div>
       </div>
     </aside>
@@ -282,7 +263,7 @@ function CallPanel() {
 // AI Coach Panel (center column, fills remaining space)
 // ---------------------------------------------------------------------------
 
-function AICoachPanel() {
+function AICoachPanel({ messages }: { messages: ReceivedMessage[] }) {
   const [coachInput, setCoachInput] = React.useState("")
 
   function handleSend() {
@@ -338,44 +319,22 @@ function AICoachPanel() {
         aria-label="AI coach feed"
         aria-live="polite"
       >
-        {/* AI message 1 */}
-        <div className="flex flex-col gap-1.5 w-full">
-          <p className="font-mono text-xs text-[#a1a1aa] leading-relaxed">
-            Customer is escalating around refund timeline. The key here is to
-            acknowledge the delay without making promises you can&apos;t keep.
+        {messages.length === 0 ? (
+          <p className="font-mono text-xs text-[#52525b]">
+            Coach is listening...
           </p>
-        </div>
-
-        {/* Tool call card — KB */}
-        <ToolCallCard
-          type="kb"
-          title="Retrieved: Refund Policy SOP"
-          body="Standard window: 30 days from purchase. Delayed refunds (>14 days after initiation): escalate to billing tier 2 and issue courtesy credit offer of 10%."
-          source="KB-2041 · Refund & Return Policy"
-        />
-
-        {/* Tool call card — Escalation */}
-        <ToolCallCard
-          type="escalation"
-          title="Escalation Path — Billing Tier 2"
-          body="1. Verify refund delay > 14 days  →  2. Offer 10% credit + expedite  →  3. If unresolved, transfer to Billing Supervisor (ext. 3302)"
-          source="SOP-0118 · Billing Escalation Procedure"
-        />
-
-        {/* AI message 2 */}
-        <div className="flex flex-col gap-1.5 w-full">
-          <p className="font-mono text-xs text-[#a1a1aa] leading-relaxed">
-            Good — you found the order. Now offer the 10% credit and confirm
-            the expedited timeline. Avoid saying &quot;I&apos;ll try&quot;.
-          </p>
-        </div>
-
-        {/* Tool call card — KB (product spec) */}
-        <ToolCallCard
-          type="kb"
-          title="Product: ProX Wireless Headset"
-          body="SKU: PRX-WH-BLK · $349 MSRP · 2yr warranty · Common issue: charging port failure (defect eligible for 90-day return)."
-        />
+        ) : (
+          messages.map((msg) => {
+            const text = msg.type === "agentTranscript" ? msg.message : msg.type === "chatMessage" ? msg.message : ""
+            return (
+              <div key={msg.id} className="flex flex-col gap-1.5 w-full">
+                <p className="font-mono text-xs text-[#a1a1aa] leading-relaxed">
+                  {text}
+                </p>
+              </div>
+            )
+          })
+        )}
       </div>
 
       {/* Input bar */}
@@ -580,27 +539,80 @@ function ScenarioBriefPanel() {
 }
 
 // ---------------------------------------------------------------------------
+// Session content — must be a descendant of SessionProvider to use hooks
+// ---------------------------------------------------------------------------
+
+function SessionContent() {
+  const { messages } = useSessionMessages()
+  // Each agent calls update_info(name=...) on its participant at session start,
+  // giving us a stable display name to route messages by.
+  const coachMessages = messages.filter(
+    (m) => m.type === "agentTranscript" && m.from?.name === "coach-agent"
+  )
+  const callMessages = messages.filter(
+    (m) => m.type === "userTranscript" ||
+      (m.type === "agentTranscript" && m.from?.name === "customer-agent")
+  )
+
+  return (
+    <>
+      <CallPanel messages={callMessages} />
+      <AICoachPanel messages={coachMessages} />
+      <ScenarioBriefPanel />
+      <RoomAudioRenderer />
+    </>
+  )
+}
+
+// ---------------------------------------------------------------------------
 // Page root
 // ---------------------------------------------------------------------------
 
 export default function ActiveSession() {
-  return (
-    <div
-      className="relative w-screen h-screen overflow-hidden bg-[#0a0a0a]"
-      aria-label="Active training session"
-    >
-      {/* Top navigation bar */}
-      <NavBar />
+  const [searchParams] = useSearchParams()
+  const sessionId = searchParams.get("sessionId") ?? ""
+  const { user } = useAuth()
 
-      {/* Three-column layout, offset by nav height */}
+  const tokenSource = useMemo(
+    () =>
+      TokenSource.custom(async () => {
+        const { token, url } = await getLiveKitToken(
+          sessionId,
+          user!.id,
+          user!.email ?? undefined
+        )
+        return { participantToken: token, serverUrl: url }
+      }),
+    [sessionId, user]
+  )
+
+  const session = useSession(tokenSource, { roomName: sessionId })
+
+  useEffect(() => {
+    if (!sessionId || !user) return
+    session.start()
+    return () => {
+      session.end()
+    }
+  }, [sessionId, user])  // eslint-disable-line react-hooks/exhaustive-deps
+
+  return (
+    <SessionProvider session={session}>
       <div
-        className="absolute inset-x-0 bottom-0 flex"
-        style={{ top: 48 }}
+        className="relative w-screen h-screen overflow-hidden bg-[#0a0a0a]"
+        aria-label="Active training session"
       >
-        <CallPanel />
-        <AICoachPanel />
-        <ScenarioBriefPanel />
+        {/* Top navigation bar */}
+        <NavBar />
+
+        {/* Three-column layout, offset by nav height */}
+        <div
+          className="absolute inset-x-0 bottom-0 flex"
+          style={{ top: 48 }}
+        >
+          <SessionContent />
+        </div>
       </div>
-    </div>
+    </SessionProvider>
   )
 }

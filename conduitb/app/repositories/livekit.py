@@ -10,7 +10,7 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-_env_path = Path(__file__).resolve().parents[3] / ".env"
+_env_path = Path(__file__).resolve().parents[2] / ".env"
 load_dotenv(dotenv_path=_env_path)
 
 LIVEKIT_URL: str = os.environ["LIVEKIT_URL"]
