@@ -8,7 +8,7 @@ from livekit.agents import Agent, AgentServer, AgentSession, room_io, TurnHandli
 from livekit.plugins import noise_cancellation, silero
 from livekit.plugins.turn_detector.multilingual import MultilingualModel
 
-load_dotenv(".env.local")
+load_dotenv(".env")
 
 logger = logging.getLogger("coach-agent")
 
