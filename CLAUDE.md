@@ -14,6 +14,9 @@ conduit/
     agent-memory/     ← persistent memory for subagents (one subfolder per agent)
   conduitc/           ← React frontend
   conduitb/           ← Python/Flask backend
+  lk-agents/
+    customer-agent/   ← LiveKit agent: simulates the customer persona
+    coach-agent/      ← LiveKit agent: observes session and coaches the trainee
 ```
 
 ---
@@ -177,3 +180,41 @@ Schemas are managed declaratively in `supabase/schemas/` as `.sql` files. Never 
 4. `supabase db push` — deploys to production
 
 RLS policies belong in the schema files alongside their tables.
+
+---
+
+## lk-agents — LiveKit Agents
+
+### Commands (run from the individual agent directory, e.g. `lk-agents/customer-agent/`)
+
+```bash
+uv sync                              # install dependencies
+uv run src/agent.py download-files  # download VAD + turn-detector models (first run only)
+uv run src/agent.py dev             # dev mode — connects to LiveKit Cloud
+uv run src/agent.py start           # production mode
+```
+
+### Stack
+
+- **livekit-agents** with the STT-LLM-TTS pipeline (Deepgram → GPT-4.1 mini → Cartesia)
+- **uv** for dependency and virtualenv management (each agent has its own `pyproject.toml`)
+- Credentials loaded from `.env.local` (copy from `.env.example`)
+
+### Agents
+
+| Agent | Name | Role |
+|---|---|---|
+| `customer-agent` | `customer-agent` | Plays the customer persona; dispatched explicitly with scenario `prompt` JSON as job metadata |
+| `coach-agent` | `coach-agent` | Silent observer; interjects with live coaching for the trainee and debriefs at end of session |
+
+### Dispatch
+
+Both agents use explicit dispatch (not automatic). They are dispatched via the `POST /api/livekit/token` flow or directly via `AgentDispatchService`. Job metadata must be a JSON string matching the scenario `prompt` column shape:
+
+```json
+{
+  "system": "...",
+  "persona": "...",
+  "objectives": ["..."]
+}
+```
