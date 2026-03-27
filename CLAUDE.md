@@ -19,6 +19,8 @@ conduit/
     coach-agent/      ← LiveKit agent: observes session and coaches the trainee
 ```
 
+**IMPORTANT:** Never create `.claude/` folders inside `conduitc/`, `conduitb/`, or any subdirectory. The only `.claude/` folder in this repo is at the repo root (`conduit/.claude/`). All agent memory goes in `conduit/.claude/agent-memory/<agent-name>/`.
+
 ---
 
 ## conduitc — Frontend

@@ -4,7 +4,7 @@ import logging
 from dotenv import load_dotenv
 
 from livekit import agents, rtc
-from livekit.agents import Agent, AgentServer, AgentSession, room_io, TurnHandlingOptions
+from livekit.agents import Agent, AgentServer, AgentSession, JobRequest, room_io, TurnHandlingOptions
 from livekit.plugins import noise_cancellation, silero
 from livekit.plugins.turn_detector.multilingual import MultilingualModel
 
@@ -19,10 +19,14 @@ class CustomerAgent(Agent):
         super().__init__(instructions=instructions)
 
 
+async def _on_request(request: JobRequest) -> None:
+    await request.accept(name="customer-agent")
+
+
 server = AgentServer()
 
 
-@server.rtc_session(agent_name="customer-agent")
+@server.rtc_session(agent_name="customer-agent", on_request=_on_request)
 async def customer_agent(ctx: agents.JobContext):
     # Job metadata is a JSON string containing the scenario prompt fields:
     # { "system": "...", "persona": "...", "objectives": [...] }
@@ -58,12 +62,6 @@ async def customer_agent(ctx: agents.JobContext):
                 ),
             ),
         ),
-    )
-
-    await ctx.room.local_participant.set_name("customer-agent")
-
-    await session.generate_reply(
-        instructions="Start the conversation as the customer. Introduce yourself briefly and state why you are calling."
     )
 
 

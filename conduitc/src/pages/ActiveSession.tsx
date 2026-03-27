@@ -18,9 +18,8 @@ import {
   RoomAudioRenderer,
   useSession,
   useAgent,
-  useSessionMessages,
+  useEnsureRoom,
 } from "@livekit/components-react"
-import type { ReceivedMessage } from "@livekit/components-core"
 
 import { cn } from "@/lib/utils"
 import { Avatar } from "@/components/ui/avatar"
@@ -30,6 +29,85 @@ import { TranscriptRow } from "@/components/ui/transcript-row"
 import { Waveform } from "@/components/ui/waveform"
 import { useAuth } from "@/context/AuthContext"
 import { getLiveKitToken } from "@/lib/api"
+
+// ---------------------------------------------------------------------------
+// Message type
+// ---------------------------------------------------------------------------
+
+type LiveMessage = {
+  id: string
+  type: "userTranscript" | "agentTranscript"
+  message: string
+  timestamp: number
+  from?: { name?: string | null }
+}
+
+// ---------------------------------------------------------------------------
+// useFinalSessionMessages — only surfaces final (non-interim) transcript chunks
+// ---------------------------------------------------------------------------
+
+function useFinalSessionMessages(): LiveMessage[] {
+  const room = useEnsureRoom()
+  const [messages, setMessages] = React.useState<LiveMessage[]>([])
+
+  React.useEffect(() => {
+    if (!room) return
+    setMessages([])
+
+    room.registerTextStreamHandler(
+      "lk.transcription",
+      (reader, participantInfo) => {
+        void (async () => {
+          // Read all text first. For streaming agent output the stream opens
+          // with lk.transcription_final="false"; the trailer sent on close()
+          // merges it to "true". Checking AFTER readAll() sees the final value.
+          const text = await reader.readAll()
+          if (!text.trim()) return
+
+          // Skip interim STT chunks — only show final or un-annotated streams.
+          if (reader.info.attributes?.["lk.transcription_final"] === "false") return
+
+          const isLocal = participantInfo.identity === room.localParticipant.identity
+          const fromParticipant = isLocal
+            ? room.localParticipant
+            : Array.from(room.remoteParticipants.values()).find(
+                (p) => p.identity === participantInfo.identity
+              )
+
+          // Use lk.segment_id as stable key so final replaces any earlier
+          // entry for the same segment; fall back to stream id.
+          const id =
+            reader.info.attributes?.["lk.segment_id"] ?? reader.info.id
+
+          setMessages((prev) => {
+            const idx = prev.findIndex((m) => m.id === id)
+            const msg: LiveMessage = {
+              id,
+              type: isLocal ? "userTranscript" : "agentTranscript",
+              message: text,
+              timestamp: reader.info.timestamp,
+              from: fromParticipant
+                ? { name: fromParticipant.name }
+                : undefined,
+            }
+            if (idx !== -1) {
+              const next = [...prev]
+              next[idx] = msg
+              return next
+            }
+            return [...prev, msg]
+          })
+        })()
+      },
+    )
+
+    return () => {
+      room.unregisterTextStreamHandler("lk.transcription")
+    }
+  }, [room])
+
+  return messages
+}
 
 // ---------------------------------------------------------------------------
 // Sub-components
@@ -108,7 +186,7 @@ function NavBar() {
 // Call Panel (left column, 380px)
 // ---------------------------------------------------------------------------
 
-function CallPanel({ messages }: { messages: ReceivedMessage[] }) {
+function CallPanel({ messages }: { messages: LiveMessage[] }) {
   const agent = useAgent()
 
   return (
@@ -263,7 +341,7 @@ function CallPanel({ messages }: { messages: ReceivedMessage[] }) {
 // AI Coach Panel (center column, fills remaining space)
 // ---------------------------------------------------------------------------
 
-function AICoachPanel({ messages }: { messages: ReceivedMessage[] }) {
+function AICoachPanel({ messages }: { messages: LiveMessage[] }) {
   const [coachInput, setCoachInput] = React.useState("")
 
   function handleSend() {
@@ -325,7 +403,7 @@ function AICoachPanel({ messages }: { messages: ReceivedMessage[] }) {
           </p>
         ) : (
           messages.map((msg) => {
-            const text = msg.type === "agentTranscript" ? msg.message : msg.type === "chatMessage" ? msg.message : ""
+            const text = msg.message
             return (
               <div key={msg.id} className="flex flex-col gap-1.5 w-full">
                 <p className="font-mono text-xs text-[#a1a1aa] leading-relaxed">
@@ -543,14 +621,13 @@ function ScenarioBriefPanel() {
 // ---------------------------------------------------------------------------
 
 function SessionContent() {
-  const { messages } = useSessionMessages()
-  // Each agent calls update_info(name=...) on its participant at session start,
-  // giving us a stable display name to route messages by.
+  const messages = useFinalSessionMessages()
   const coachMessages = messages.filter(
     (m) => m.type === "agentTranscript" && m.from?.name === "coach-agent"
   )
   const callMessages = messages.filter(
-    (m) => m.type === "userTranscript" ||
+    (m) =>
+      m.type === "userTranscript" ||
       (m.type === "agentTranscript" && m.from?.name === "customer-agent")
   )
 
