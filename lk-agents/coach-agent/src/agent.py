@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 
@@ -94,6 +95,33 @@ async def coach_agent(ctx: agents.JobContext):
         is_delta_stream=True,
         participant=ctx.room.local_participant.identity,
     )
+
+    # Listen to customer-agent's final transcriptions and trigger coaching replies.
+    # The coach's STT pipeline only hears the trainee (human participant); the customer-agent
+    # is PARTICIPANT_KIND_AGENT and is excluded from RoomIO's default participant kinds.
+    # We bridge this by reading the customer-agent's published lk.transcription text streams.
+    def _on_transcription(reader: rtc.TextStreamReader, participant_identity: str) -> None:
+        async def _handle() -> None:
+            text = await reader.read_all()
+            if not text.strip():
+                return
+            # Check AFTER read_all() — for streaming text the trailer updates the final attribute.
+            if reader.info.attributes.get("lk.transcription_final") != "true":
+                return
+            # Only react to the customer-agent's speech, not the trainee's (which the coach
+            # already hears via its own STT pipeline).
+            customer = next(
+                (p for p in ctx.room.remote_participants.values() if p.name == "customer-agent"),
+                None,
+            )
+            if not customer or participant_identity != customer.identity:
+                return
+            logger.debug("Customer said: %s — triggering coach reply", text)
+            await session.generate_reply(user_input=f"[Customer]: {text}")
+
+        asyncio.create_task(_handle())
+
+    ctx.room.register_text_stream_handler("lk.transcription", _on_transcription)
 
     # Coach listens silently until there is something worth saying.
     await session.generate_reply(
