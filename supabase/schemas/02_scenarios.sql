@@ -9,6 +9,7 @@ create table public.scenarios (
   customer_tier           text,
   customer_sentiment      text,
   customer_prior_contacts int default 0,
+  prompt                  jsonb,
   created_at              timestamptz default now()
 );
 
