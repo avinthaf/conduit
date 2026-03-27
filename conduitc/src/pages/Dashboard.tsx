@@ -12,10 +12,14 @@ import {
   PhoneCall,
 } from "lucide-react"
 
+import { useNavigate } from "react-router-dom"
+
 import { Button } from "@/components/ui/button"
 import { Avatar } from "@/components/ui/avatar"
 import { ScenarioPickerModal } from "@/components/ui/scenario-picker-modal"
 import { cn } from "@/lib/utils"
+import { createSession } from "@/lib/api"
+import { useAuth } from "@/context/AuthContext"
 
 // ---------------------------------------------------------------------------
 // Types
@@ -286,6 +290,8 @@ function SidebarItem({
 // ---------------------------------------------------------------------------
 
 export default function Dashboard() {
+  const { user } = useAuth()
+  const navigate = useNavigate()
   const [query, setQuery] = React.useState("")
   const [modalOpen, setModalOpen] = React.useState(false)
 
@@ -611,10 +617,10 @@ export default function Dashboard() {
       <ScenarioPickerModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
-        onStart={(id) => {
+        onStart={async (scenarioId) => {
           setModalOpen(false)
-          // TODO: navigate to active session for scenario `id`
-          console.log("Starting session for scenario:", id)
+          const session = await createSession(user!.id, scenarioId)
+          navigate(`/session/active?sessionId=${session.id}`)
         }}
       />
     </div>

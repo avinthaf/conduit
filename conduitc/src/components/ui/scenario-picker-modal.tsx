@@ -3,6 +3,7 @@ import { X, Play, CircleCheck } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { type ApiScenario, getScenarios } from "@/lib/api"
 
 // ---------------------------------------------------------------------------
 // Types
@@ -25,43 +26,24 @@ interface ScenarioPickerModalProps {
 }
 
 // ---------------------------------------------------------------------------
-// Hardcoded scenario data — will be replaced by API data later
+// Map DB values to display values
 // ---------------------------------------------------------------------------
 
-const SCENARIOS: Scenario[] = [
-  {
-    id: "billing-dispute",
-    name: "Billing Dispute Resolution",
-    description:
-      "Handle a frustrated customer disputing an incorrect charge on their account.",
-    difficulty: "Easy",
-    category: "Billing",
-  },
-  {
-    id: "product-returns",
-    name: "Product Returns & Exchanges",
-    description:
-      "Process a return request for a defective item with an expired warranty.",
-    difficulty: "Medium",
-    category: "Product",
-  },
-  {
-    id: "tech-support",
-    name: "Technical Support Escalation",
-    description:
-      "Troubleshoot a complex multi-device sync failure requiring escalation.",
-    difficulty: "Hard",
-    category: "Technical Support",
-  },
-  {
-    id: "sub-cancellation",
-    name: "Subscription Cancellation Save",
-    description:
-      "Retain a long-term customer attempting to cancel due to pricing concerns.",
-    difficulty: "Medium",
-    category: "Retention",
-  },
-]
+const DIFFICULTY_MAP: Record<ApiScenario["difficulty"], Difficulty> = {
+  Beginner:     "Easy",
+  Intermediate: "Medium",
+  Advanced:     "Hard",
+}
+
+function toScenario(api: ApiScenario): Scenario {
+  return {
+    id:         api.id,
+    name:       api.name,
+    description: api.objectives[0] ?? "",
+    difficulty: DIFFICULTY_MAP[api.difficulty],
+    category:   api.type,
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Difficulty badge — inline styled per design tokens
@@ -194,10 +176,19 @@ export function ScenarioPickerModal({
   onStart,
 }: ScenarioPickerModalProps) {
   const [selectedId, setSelectedId] = React.useState<string | null>(null)
+  const [scenarios, setScenarios] = React.useState<Scenario[]>([])
+  const [loading, setLoading] = React.useState(false)
 
-  // Reset selection when modal opens
+  // Fetch scenarios + reset selection when modal opens
   React.useEffect(() => {
-    if (open) setSelectedId(null)
+    if (!open) return
+    setSelectedId(null)
+    setLoading(true)
+    getScenarios()
+      .then((apiScenarios) => {
+        setScenarios(apiScenarios.map(toScenario))
+      })
+      .finally(() => setLoading(false))
   }, [open])
 
   // Close on Escape
@@ -280,7 +271,7 @@ export function ScenarioPickerModal({
             type="button"
             onClick={onClose}
             className={cn(
-              "flex items-center justify-center shrink-0 rounded-[4px]",
+              "flex items-center justify-center shrink-0 rounded-lg",
               "transition-colors duration-150 cursor-pointer",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
             )}
@@ -303,18 +294,24 @@ export function ScenarioPickerModal({
           className="flex flex-col gap-3 w-full overflow-y-auto px-6 py-5"
           style={{ backgroundColor: "#0a0a0a", flex: "1 1 auto", minHeight: 0 }}
         >
-          {SCENARIOS.map((scenario) => (
-            <ScenarioCard
-              key={scenario.id}
-              scenario={scenario}
-              selected={selectedId === scenario.id}
-              onClick={() =>
-                setSelectedId(
-                  selectedId === scenario.id ? null : scenario.id
-                )
-              }
-            />
-          ))}
+          {loading ? (
+            <p className="font-mono text-[12px] text-[#71717a] py-4 text-center">
+              Loading scenarios…
+            </p>
+          ) : (
+            scenarios.map((scenario) => (
+              <ScenarioCard
+                key={scenario.id}
+                scenario={scenario}
+                selected={selectedId === scenario.id}
+                onClick={() =>
+                  setSelectedId(
+                    selectedId === scenario.id ? null : scenario.id
+                  )
+                }
+              />
+            ))
+          )}
         </div>
 
         {/* ---------------------------------------------------------------- */}
