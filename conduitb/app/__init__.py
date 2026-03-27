@@ -15,4 +15,7 @@ def create_app():
     from app.routes.sessions import bp as sessions_bp
     app.register_blueprint(sessions_bp)
 
+    from app.routes.livekit import bp as livekit_bp
+    app.register_blueprint(livekit_bp)
+
     return app
