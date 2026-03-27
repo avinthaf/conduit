@@ -7,10 +7,40 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# JavaScript / Node
 node_modules
 dist
 dist-ssr
 *.local
+.npm
+.yarn-integrity
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+ENV/
+pip-log.txt
+pip-delete-this-directory.txt
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
 
 # Editor directories and files
 .vscode/*
