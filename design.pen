@@ -8172,7 +8172,8 @@
                   "content": "AI-powered customer service training",
                   "textAlign": "center",
                   "fontFamily": "IBM Plex Mono",
-                  "fontSize": 13
+                  "fontSize": 13,
+                  "fontWeight": "normal"
                 }
               ]
             },

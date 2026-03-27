@@ -4,15 +4,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository structure
 
-This is a monorepo. The frontend lives in `conduitc/`. Future directories (e.g. `conduitb/`) will hold backend services in non-JavaScript runtimes.
+This is a monorepo. The frontend lives in `conduitc/` and the Python backend in `conduitb/`.
 
 ```
 conduit/
   design.pen          ← Source of truth for all UI design (pencil.dev, use pencil MCP tools to read)
   .claude/
-    agents/           ← designer, ui-developer, frontend-developer subagents
-    agent-memory/     ← persistent memory for subagents
+    agents/           ← all subagents: designer, ui-developer, frontend-developer, backend-developer
+    agent-memory/     ← persistent memory for subagents (one subfolder per agent)
   conduitc/           ← React frontend
+  conduitb/           ← Python/Flask backend
 ```
 
 ## conduitc — Frontend
