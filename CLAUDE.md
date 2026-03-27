@@ -16,6 +16,8 @@ conduit/
   conduitb/           ← Python/Flask backend
 ```
 
+---
+
 ## conduitc — Frontend
 
 ### Commands (run from `conduitc/`)
@@ -81,6 +83,7 @@ src/
   context/
     AuthContext.tsx   ← AuthProvider, useAuth() hook, ProtectedRoute
   lib/
+    api.ts            ← all backend fetch calls; base URL http://127.0.0.1:5000
     supabase.ts       ← Supabase client singleton (reads VITE_SUPABASE_URL / VITE_SUPABASE_KEY)
     utils.ts          ← cn() helper
   index.css           ← Tailwind imports + shadcn tokens + @theme inline
@@ -100,6 +103,10 @@ Auth is implemented with `@supabase/supabase-js`. The local Supabase instance AP
 - Email confirmation is **disabled** — `signUp` resolves a session immediately.
 - `conduitc/.env` must contain `VITE_SUPABASE_URL` and `VITE_SUPABASE_KEY` (Vite only reads env from the `conduitc/` directory, not the repo root).
 
+### Backend API layer
+
+All backend calls go through `src/lib/api.ts` (base URL `http://127.0.0.1:5000`). Add new backend functions here — never write raw `fetch` calls in components or pages.
+
 ### Component hierarchy
 
 Pages compose from `src/components/ui/`. Before writing any UI, always glob `src/components/ui/` and read relevant files — never recreate inline what already exists. Priority order: project components → shadcn/ui → raw HTML.
@@ -107,3 +114,66 @@ Pages compose from `src/components/ui/`. Before writing any UI, always glob `src
 ### Design file
 
 `design.pen` at the repo root is the source of truth for all screen layouts. Use the **pencil MCP tools** (`batch_get`, `get_screenshot`) to read it — never use `Read` or `Grep` on `.pen` files. When building or iterating on a screen, always read the corresponding screen from `design.pen` first; the design overrides any text description if they conflict.
+
+---
+
+## conduitb — Backend
+
+### Commands (run from `conduitb/`)
+
+```bash
+python main.py                  # start Flask dev server (port 5000)
+pip install -r requirements.txt # install dependencies
+```
+
+### Stack
+
+- **Flask 3.1.1** with app factory pattern (`create_app()` in `app/__init__.py`)
+- **Supabase** (`supabase-py`) for all database access — no ORM, no migrations by hand
+- **livekit-api** for LiveKit token generation
+- **python-dotenv** loading from `conduitb/.env`
+
+### Environment variables (`conduitb/.env`)
+
+```
+SUPABASE_URL=
+SUPABASE_KEY=
+LIVEKIT_URL=
+LIVEKIT_API_KEY=
+LIVEKIT_API_SECRET=
+```
+
+### Architecture — strict 3-layer
+
+Every feature spans exactly three files:
+
+| Layer | Location | Rule |
+|---|---|---|
+| **Routes** (presentation) | `app/routes/<domain>.py` | Parses request, calls service, returns JSON. No business logic, no DB calls. |
+| **Services** (business logic) | `app/services/<domain>_service.py` | Orchestrates use cases. Calls repositories only — never the Supabase client directly. |
+| **Repositories** (data access) | `app/repositories/<domain>_repo.py` | All Supabase calls live here. Returns plain dicts or dataclasses — never raw Supabase response objects. |
+
+Singletons for external clients live in `app/repositories/` alongside repos: `supabase.py` exports the `supabase` client, `livekit.py` exports `LIVEKIT_URL/API_KEY/API_SECRET`.
+
+### Current API endpoints
+
+| Method | Path | Purpose |
+|---|---|---|
+| `GET` | `/` | Health check |
+| `GET` | `/api/scenarios` | List all scenarios |
+| `POST` | `/api/sessions` | Create a session — body: `{ user_id, scenario_id }` |
+| `POST` | `/api/livekit/token` | Generate LiveKit room token — body: `{ session_id, user_id, name? }` |
+
+The LiveKit token endpoint uses the session's UUID as the room name. LiveKit auto-creates rooms on first join.
+
+### Schema management
+
+Schemas are managed declaratively in `supabase/schemas/` as `.sql` files. Never write raw migration files by hand.
+
+**Workflow when adding or changing a table:**
+1. Edit (or create) the file in `supabase/schemas/`
+2. `supabase db diff -f <migration_name>` — generates the migration
+3. `supabase migration up` — applies locally
+4. `supabase db push` — deploys to production
+
+RLS policies belong in the schema files alongside their tables.
